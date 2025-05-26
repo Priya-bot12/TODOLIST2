@@ -26,6 +26,7 @@ const ToDoList = () => {
   const [filter, setFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('default');
   const [isStorageError, setIsStorageError] = useState(false);
+  const [isInputFocused, setIsInputFocused] = useState(false);
 
   // Save tasks to localStorage whenever they change
   useEffect(() => {
@@ -94,55 +95,66 @@ const ToDoList = () => {
 
   return (
     <div className="todo-container">
-      <h1>To-Do List</h1>
+      <div className="header">
+        <h1>To-Do List</h1>
+        <p>Get things done, one task at a time</p>
+      </div>
       
       {isStorageError && (
         <div className="storage-error">
-          Warning: Could not save tasks to browser storage. Your changes may not persist.
+          ⚠️ Warning: Could not save tasks to browser storage. Your changes may not persist.
         </div>
       )}
       
-      <div className="input-container">
+      <div className={`input-container ${isInputFocused ? 'focused' : ''}`}>
         <input
           type="text"
           value={newTask}
           onChange={(e) => setNewTask(e.target.value)}
           onKeyPress={handleKeyPress}
-          placeholder="Add a new task..."
+          onFocus={() => setIsInputFocused(true)}
+          onBlur={() => setIsInputFocused(false)}
+          placeholder="What needs to be done?"
           aria-label="Add a new task"
         />
-        <button onClick={addTask} aria-label="Add task">Add</button>
+        <button onClick={addTask} aria-label="Add task">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
       </div>
       
       <div className="controls">
         <div className="filter-controls">
-          <span>Filter: </span>
+          <span>Show: </span>
           <button 
             className={filter === 'all' ? 'active' : ''} 
             onClick={() => setFilter('all')}
             aria-label="Show all tasks"
           >
-            All ({tasks.length})
+            All
           </button>
           <button 
             className={filter === 'active' ? 'active' : ''} 
             onClick={() => setFilter('active')}
             aria-label="Show active tasks"
           >
-            Active ({remainingTasks})
+            Active
           </button>
           <button 
             className={filter === 'completed' ? 'active' : ''} 
             onClick={() => setFilter('completed')}
             aria-label="Show completed tasks"
           >
-            Completed ({completedTasks})
+            Completed
           </button>
         </div>
         
         <div className="sort-controls">
-          <span>Sort by: </span>
+          <label htmlFor="sort-select">Sort by:</label>
           <select 
+            id="sort-select"
             value={sortOrder} 
             onChange={(e) => setSortOrder(e.target.value)}
             aria-label="Sort tasks"
@@ -156,37 +168,8 @@ const ToDoList = () => {
         </div>
       </div>
       
-      <ul className="task-list" aria-live="polite">
-        {sortedTasks.length === 0 ? (
-          <li className="empty-message">No tasks found</li>
-        ) : (
-          sortedTasks.map(task => (
-            <li 
-              key={task.id} 
-              className={task.completed ? 'completed' : ''}
-              aria-label={`Task: ${task.text}`}
-            >
-              <input
-                type="checkbox"
-                checked={task.completed}
-                onChange={() => toggleTaskCompletion(task.id)}
-                aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
-              />
-              <span className="task-text">{task.text}</span>
-              <button 
-                className="delete-btn"
-                onClick={() => removeTask(task.id)}
-                aria-label="Delete task"
-              >
-                ×
-              </button>
-            </li>
-          ))
-        )}
-      </ul>
-      
-      <div className="stats">
-        <span>{remainingTasks} {remainingTasks === 1 ? 'task' : 'tasks'} remaining</span>
+      <div className="task-count">
+        <span className="remaining">{remainingTasks} {remainingTasks === 1 ? 'task' : 'tasks'} left</span>
         {completedTasks > 0 && (
           <button 
             className="clear-completed" 
@@ -197,6 +180,49 @@ const ToDoList = () => {
           </button>
         )}
       </div>
+      
+      <ul className="task-list" aria-live="polite">
+        {sortedTasks.length === 0 ? (
+          <li className="empty-message">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p>No tasks found</p>
+            <small>Add a task above to get started</small>
+          </li>
+        ) : (
+          sortedTasks.map(task => (
+            <li 
+              key={task.id} 
+              className={task.completed ? 'completed' : ''}
+              aria-label={`Task: ${task.text}`}
+            >
+              <label className="checkbox-container">
+                <input
+                  type="checkbox"
+                  checked={task.completed}
+                  onChange={() => toggleTaskCompletion(task.id)}
+                  aria-label={task.completed ? 'Mark as incomplete' : 'Mark as complete'}
+                />
+                <span className="checkmark"></span>
+              </label>
+              <span className="task-text">{task.text}</span>
+              <button 
+                className="delete-btn"
+                onClick={() => removeTask(task.id)}
+                aria-label="Delete task"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </li>
+          ))
+        )}
+      </ul>
     </div>
   );
 };
